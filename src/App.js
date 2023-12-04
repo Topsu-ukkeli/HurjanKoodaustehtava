@@ -44,72 +44,71 @@ const App = () => {
     setRivienMaaraN(0);
     setSolumaaraM(0)
   }
-  const handleCellClick = (value,riviID,soluID) => {
-    console.log(value);
-    console.log(riviID);
-    console.log(soluID);
-
+  const handleCellClick = (value) => {
     const tiedote = prompt("Valitse toiminto antamalla, jokin merkki + ,- ,/ tai *: ");
-    console.log(tiedote)
+    let valinta = 0;
 
-    // if (tiedote === '+'){
-    //   const valinta = Number(prompt("Anna arvo: ", 10));
-    //   setTaulunData((prevData) => {
-    //     const UusiArvo = [...prevData];
-    //     UusiArvo[value] += valinta;
-    //     return UusiArvo;
-    //   });
-    // }
     if (tiedote === '+') {
-      const valinta = Number(prompt("Anna arvo: ", 10));
+      valinta = Number(prompt("Anna arvo: ", 10));
       setTaulunData((prevData) => {
-        const UusiArvo = prevData.map((item, index) => {
-          if (index === value) {
-            return { ...item, value: item.value + valinta };
-          }
-          return item;
+        const UusiArvo = prevData.map((rivi, riviIndex) => {
+          return rivi.map((solu, soluIndex) => {
+            if (value === solu.value) {
+              return { ...solu, value: solu.value + valinta };
+            }
+            return solu;
+          });
         });
         return UusiArvo;
       });
-    }    
-    else if (tiedote === '-'){
-      const valinta = Number(prompt("Anna arvo: ", 10));
+    } else if (tiedote === '-') {
+      valinta = Number(prompt("Anna arvo: ", 10));
       setTaulunData((prevData) => {
-        const UusiArvo = [...prevData];
-        value.valinta -= valinta;
+        const UusiArvo = prevData.map((rivi, riviIndex) => {
+          return rivi.map((solu, soluIndex) => {
+            if (value === solu.value) {
+              return { ...solu, value: solu.value - valinta };
+            }
+            return solu;
+          });
+        });
         return UusiArvo;
       });
-    }
-    else if (tiedote === '/'){
-      if(valinta === 0)
-      {
+    } else if (tiedote === '/') {
+      valinta = Number(prompt("Anna arvo: ", 10));
+      if (valinta === 0) {
         alert("Nollalla ei voi jakaa!")
         return null;
       }
-      else
-      {
-        const valinta = Number(prompt("Anna arvo: ", 10));
-        setTaulunData((prevData) => {
-          const UusiArvo = [...prevData];
-          UusiArvo[value].valinta /= valinta;
-          return UusiArvo;
-        });
-      }
-    }
-    else if (tiedote === '*'){
-      const valinta = Number(prompt("Anna arvo: ", 10));
       setTaulunData((prevData) => {
-        const UusiArvo = [...prevData];
-        UusiArvo[value].valinta *= valinta;
+        const UusiArvo = prevData.map((rivi, riviIndex) => {
+          return rivi.map((solu, soluIndex) => {
+            if (value === solu.value) {
+              return { ...solu, value: solu.value / valinta };
+            }
+            return solu;
+          });
+        });
+        return UusiArvo;
+      });
+    } else if (tiedote === '*') {
+      valinta = Number(prompt("Anna arvo: ", 10));
+      setTaulunData((prevData) => {
+        const UusiArvo = prevData.map((rivi, riviIndex) => {
+          return rivi.map((solu, soluIndex) => {
+            if (value === solu.value) {
+              return { ...solu, value: solu.value * valinta };
+            }
+            return solu;
+          });
+        });
         return UusiArvo;
       });
     }
-    else
-    {
-
+    else {
+      alert("Sinun täytyy valita jokin operaatio +,-,/,*")
     }
-
-  }
+  };
   return (
     <div>
       <div>
@@ -139,4 +138,3 @@ const App = () => {
   );
 };
 export default App;
-
