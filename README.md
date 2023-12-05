@@ -1,6 +1,6 @@
 # Käyttääksesi sovellusta tarvitaan asentaa muutama paketti
 
-src tiedostoon pitää ajaa seuraavat komennot komentokehotteella:
+Pääkansioon pitää ajaa seuraavat komennot komentokehotteella:
 
 ### `npm install`
 
