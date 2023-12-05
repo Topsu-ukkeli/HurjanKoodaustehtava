@@ -12,7 +12,7 @@ const HaeTaulunTiedot = async (req, res, next) => {
         const error = new HttpError("error", 201);
         return next(error);
     }
-    if (!TaulunTiedot || TaulunTiedot.length == 0) {
+    if (!TaulunTiedot || TaulunTiedot.length === 0) {
         const error = new HttpError("Tauluun ei löydetty tietoja", 404);
         return next(error);
     }
@@ -69,7 +69,24 @@ const CreateNewTaulu = async (req, res, next) => {
     }
 
 }
+const getByID = async (req,res,next) => {
 
+    const TauluID = req.params._id;
+
+    if(!TauluID){
+        const error = new HttpError('Taulua ei löydy', 400);
+        return next(error);
+    }
+    let taulu
+    try{
+        taulu = await Taulut.findOne({ _id: TauluID });
+    }catch{
+        const error = new HttpError('Taulua ei löydy', 500);
+        return next(error);
+    }
+    res.json(taulu);
+}
 exports.HaeTaulunTiedot = HaeTaulunTiedot;
 exports.UpdateTaulu = UpdateTaulu;
 exports.CreateNewTaulu = CreateNewTaulu;
+exports.getByID = getByID;
