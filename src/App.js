@@ -1,6 +1,5 @@
 import './App.css'
 import React, { useState, useEffect } from 'react';
-import { HaeTaulunTiedot } from './Backend/Controllers/TauluController';
 
 
 const App = () => {
@@ -33,13 +32,11 @@ const App = () => {
       alert("Luku ei ole positiivinen");
     }
   }
-
-  //Haetaan tietokannasta datat
+  //Haetaan tietokannasta rivit ja solut
   const HaeTaulunTiedot = async () => {
     try {
       const response = await fetch("http://localhost:5000/HaeTauluunTiedot/");
       const data = await response.json();
-      console.log(data);
       if (data) {
         setTaulunData2(data);
         setShowOptions(true);
@@ -50,6 +47,10 @@ const App = () => {
       console.error('Error fetching data:', err);
     }
   };
+  useEffect(() => {
+    //Kun taulun id vaihtuu näytetään sen taulu
+    TaulunHaku();
+  }, [TauluID]);
 
   useEffect(() => {
     HaeTaulunTiedot();
@@ -70,20 +71,7 @@ const App = () => {
       });
       const data = await vastaus.json();
       HaeTaulunTiedot();
-
-      const ValikainenTaulu = [];
-
-      let solujenArvo = 1;
-
-      for (let i = 0; i < RivienMaaraN; i++) {
-        const rivi = [];
-        for (let j = 0; j < SolumaaraM; j++) {
-          rivi.push({ value: solujenArvo++ });
-        }
-        //viedään väliaikaiseen tauluun rivien ja solujen määrät 
-        ValikainenTaulu.push(rivi);
-      }
-      setTaulunData(ValikainenTaulu);
+      TaulunHaku();
     } catch (err) {
       console.error(err);
     }
@@ -105,6 +93,24 @@ const App = () => {
     } catch {
 
     }
+    TaulunHaku();
+  };
+
+  const Tyhjenna = () => {
+    //tässä voidaan tyhjentää näyttö ilman että sivua päivitetään
+    setTaulunData([]);
+    setRivienMaaraN(0);
+    setSolumaaraM(0)
+  }
+  const HandleClick = (value, rivit, solut, id) => {
+    setSelectedOption(value);
+    setRivienMaaraN(Number(rivit));
+    setSolumaaraM(Number(solut));
+    setTauluID(id);
+    TaulunHaku();
+    
+  }
+  const TaulunHaku = () => {
     const ValikainenTaulu = [];
 
     let solujenArvo = 1;
@@ -119,19 +125,6 @@ const App = () => {
     }
     setTaulunData(ValikainenTaulu);
 
-  };
-
-  const Tyhjenna = () => {
-    //tässä voidaan tyhjentää näyttö ilman että sivua päivitetään
-    setTaulunData([]);
-    setRivienMaaraN(0);
-    setSolumaaraM(0)
-  }
-  const HandleClick = (value, rivit, solut, id) => {
-    setSelectedOption(value);
-    setRivienMaaraN(Number(rivit));
-    setSolumaaraM(Number(solut));
-    setTauluID(id);
   }
   const handleCellClick = (value, rivit, solut) => {
     const tiedote = prompt("Valitse toiminto antamalla, jokin merkki + ,- ,/ tai *: ");
@@ -232,7 +225,6 @@ const App = () => {
       ) : (
         <div />
       )}
-
       <table border="1">
         <tbody>
           {TaulunData.map((rivi, riviID) => (
