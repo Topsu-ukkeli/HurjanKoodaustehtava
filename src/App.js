@@ -42,7 +42,7 @@ const App = () => {
       }
     } catch (err) {
       setShowOptions(false);
-      console.error('Error fetching data:', err);
+     // console.error('Error fetching data:', err);
     }
   };
   useEffect(() => {
@@ -73,26 +73,40 @@ const App = () => {
       HaeTaulunTiedot();
       TaulunHaku();
     } catch (err) {
-      console.error(err);
+    //  console.error(err);
     }
   }
   //Funktiossa luodaan käyttäjän antamilla parametreillä taulu tietokantaan
   const LuoTaulu = async () => {
+    const ValiaikainenData = [];
+    let solujenArvo = 1;
+
+    for (let i = 0; i < RivienMaaraN; i++) {
+      const row = [];
+      for (let j = 0; j < SolumaaraM; j++) {
+        row.push({ value: solujenArvo++ });
+      }
+      ValiaikainenData.push(row);
+    }
+    setTaulunData(ValiaikainenData);
+
     try {
       const UusiTaulu = {
         rivit: RivienMaaraN,
         solut: SolumaaraM,
+        solujenArvot: ValiaikainenData.flat(),
       };
-      fetch('http://localhost:5000/createTaulu', {
+
+      const vastaus = await fetch('http://localhost:5000/createTaulu', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(UusiTaulu)
-      })
-      HaeTaulunTiedot();
-    } catch {
-
+        body: JSON.stringify(UusiTaulu),
+      });
+      await vastaus.json();
+    } catch (error) {
+      //console.error('Error:', error.message);
     }
     //Haetaan taulu tieto ja tulostetaan se näytölle
     TaulunHaku();
@@ -114,33 +128,51 @@ const App = () => {
 
   }
   const TaulunHaku = async () => {
-    //tiedo haetaan tietokannasta ja näytetään käyttäjälle
+    //tiedot haetaan tietokannasta ja näytetään käyttäjälle
     try {
       const valinta = await fetch(`http://localhost:5000/IDhaku/${TauluID}`);
       const data = await valinta.json();
-
       if (data) {
-        const ValiaikainenData = [];
-        let solujenArvo = 1;
-        for (let i = 0; i < RivienMaaraN; i++) {
-          const row = [];
-          for (let j = 0; j < SolumaaraM; j++) {
-            row.push({ value: solujenArvo++ });
-          }
-          ValiaikainenData.push(row);
-        }
-        setTaulunData(ValiaikainenData);
+        // Asetetaan rivit ja solut oikein ja luodaan taulukko oikeilla arvoilla
+        const rivit = data.rivit;
+        const solut = data.solut;
+        const TaulunData = Array.from({ length: rivit }, () => Array(solut).fill(null));
+        // Täytetään taulukko oikein 
+        data.solujenArvot.forEach((item, index) => {
+          const rivi = Math.floor(index / solut);
+          const solu = index % solut;
+          TaulunData[rivi][solu] = { value: item.value, _id: item._id };
+        });
+
+        setTaulunData(TaulunData);
       } else {
-        console.error('data ei ole oikeassa muodossa', data);
+       // console.error('Data ei ole oikeassa muodossa', data);
       }
     } catch (err) {
-      console.error('Datan haku epäonnistui', err);
+      //console.error('Datan haku epäonnistui', err);
     }
   };
 
+  const updateSolunArvo = async (soluId, newValue) => {
+    console.log(soluId);
+    console.log(newValue);
+    try {
+      const response = await fetch(`http://localhost:5000/updateSolut/${soluId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ value: newValue }),
+      });
+      const data = await response.json();
+      console.log(data);
+    } catch (err) {
+      console.error(err);
+    }
+    HaeTaulunTiedot();
+  };
+  const handleCellClick = async (value) => {
 
-
-  const handleCellClick = (value, rivit, solut) => {
     //katsotaan käyttäjän valitsema solu ja minkä toiminnon hän haluaa tehdä toiminto ei voi olla mikään muu kuin +,-,/ tai * muuten tulee ilmoitus
     const tiedote = prompt("Valitse toiminto antamalla, jokin merkki + ,- ,/ tai *: ");
     let valinta = 0;
@@ -148,22 +180,25 @@ const App = () => {
     if (tiedote === '+') {
       valinta = Number(prompt("Anna arvo: ", 10));
       setTaulunData((prevData) => {
-        const UusiArvo = prevData.map((rivi, riviIndex) => {
-          return rivi.map((solu, soluIndex) => {
+        const updatedData = prevData.map((rivi) => {
+          return rivi.map((solu) => {
             if (value === solu.value) {
+              updateSolunArvo(solu._id, solu.value + valinta);
               return { ...solu, value: solu.value + valinta };
             }
             return solu;
           });
         });
-        return UusiArvo;
+        return updatedData;
       });
-    } else if (tiedote === '-') {
+    }
+    else if (tiedote === '-') {
       valinta = Number(prompt("Anna arvo: ", 10));
       setTaulunData((prevData) => {
-        const UusiArvo = prevData.map((rivi, riviIndex) => {
-          return rivi.map((solu, soluIndex) => {
+        const UusiArvo = prevData.map((rivi) => {
+          return rivi.map((solu) => {
             if (value === solu.value) {
+              updateSolunArvo(solu._id, solu.value - valinta);
               return { ...solu, value: solu.value - valinta };
             }
             return solu;
@@ -178,9 +213,10 @@ const App = () => {
         return null;
       }
       setTaulunData((prevData) => {
-        const UusiArvo = prevData.map((rivi, riviIndex) => {
-          return rivi.map((solu, soluIndex) => {
+        const UusiArvo = prevData.map((rivi) => {
+          return rivi.map((solu) => {
             if (value === solu.value) {
+              updateSolunArvo(solu._id, solu.value / valinta);
               return { ...solu, value: solu.value / valinta };
             }
             return solu;
@@ -191,9 +227,10 @@ const App = () => {
     } else if (tiedote === '*') {
       valinta = Number(prompt("Anna arvo: ", 10));
       setTaulunData((prevData) => {
-        const UusiArvo = prevData.map((rivi, riviIndex) => {
-          return rivi.map((solu, soluIndex) => {
+        const UusiArvo = prevData.map((rivi) => {
+          return rivi.map((solu) => {
             if (value === solu.value) {
+              updateSolunArvo(solu._id, solu.value * valinta);
               return { ...solu, value: solu.value * valinta };
             }
             return solu;
@@ -217,27 +254,31 @@ const App = () => {
         <label>Anna solujen määrä : </label>
         <input type="number" value={SolumaaraM} onChange={handleColumnChange} />
       </div>
-      <button onClick={LuoTaulu}>Luo taulu annetuilla arvoilla</button>
+      <button onClick={LuoTaulu}>Luo uusi taulu annetuilla arvoilla</button>
       <button onClick={Tyhjenna}>Paina tyhjentääksesi näyttö</button>
       <br />
       <button onClick={HaeTaulunTiedot}>Paina jos haluat hakea taulun dataa </button>
       <button onClick={HandleUpdate}>Päivitä arvot tietokantaan</button>
       <br />
       {ShowOptions ? (
-        <select onChange={(e) => {
-          const [rivit, solut, id] = e.target.value.split('-');
-          HandleClick(e.target.value, rivit, solut, id);
-        }}
-        >
-          {TaulunData2.map((valinta, index) => (
-            <option
-              key={index}
-              value={`${valinta.rivit}-${valinta.solut}-${valinta._id}`}
-            >
-              Rivit: {valinta.rivit} - Solut: {valinta.solut}
-            </option>
-          ))}
-        </select>
+        <label id='Alasveto'>
+          Valitse haluamasi taulun koko valikosta:
+          <br />
+          <select onChange={(e) => {
+            const [rivit, solut, id] = e.target.value.split('-');
+            HandleClick(e.target.value, rivit, solut, id);
+          }}
+          >
+            {TaulunData2.map((valinta, index) => (
+              <option
+                key={index}
+                value={`${valinta.rivit}-${valinta.solut}-${valinta._id}`}
+              >
+                Rivit: {valinta.rivit} - Solut: {valinta.solut}
+              </option>
+            ))}
+          </select>
+        </label>
       ) : (
         <div />
       )}

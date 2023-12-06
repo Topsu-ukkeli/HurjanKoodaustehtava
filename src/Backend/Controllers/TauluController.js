@@ -21,7 +21,6 @@ const HaeTaulunTiedot = async (req, res, next) => {
 const UpdateTaulu = async (req, res, next) => {
     const { rivit, solut } = req.body;
     const ValittuID = req.params._id;
-
     try {
         const TaulunTieto = await Taulut.findById(ValittuID);
         if (TaulunTieto) {
@@ -41,52 +40,77 @@ const UpdateTaulu = async (req, res, next) => {
 
 }
 const CreateNewTaulu = async (req, res, next) => {
-    const { rivit, solut } = req.body;
-    if (!rivit || !solut) {
+    const { rivit, solut, solujenArvot } = req.body;
+
+    if (!rivit || !solut || !solujenArvot) {
         const error = new HttpError("TÄYTÄ", 413);
         return next(error);
     }
-    else {
-        const TaulunUusiId = new mongoose.Types.ObjectId().toHexString();
-        const LuoTaulu = new Taulut({
-            _id: TaulunUusiId,
-            rivit: rivit,
-            solut: solut,
-        });
-        try {
-            try {
-                await LuoTaulu.save();
-            }
-            catch (err) {
 
-            }
-        } catch {
-            const error = new HttpError("Taulua ei voitu lisätä tietokantaan", 500);
-            return next(error);
-        }
+    const TaulunUusiId = new mongoose.Types.ObjectId().toHexString();
+
+    const LuoTaulu = new Taulut({
+        _id: TaulunUusiId,
+        rivit: rivit,
+        solut: solut,
+        solujenArvot: solujenArvot,
+    });
+
+    try {
+        await LuoTaulu.save();
         res.status(201).json(LuoTaulu);
-
+    } catch (err) {
+        // console.error(err.message);
+        const error = new HttpError("Taulua ei voitu lisätä tietokantaan", 500);
+        return next(error);
     }
-
 }
-const getByID = async (req,res,next) => {
+const getByID = async (req, res, next) => {
 
     const TauluID = req.params._id;
 
-    if(!TauluID){
+    if (!TauluID) {
         const error = new HttpError('Taulua ei löydy', 400);
         return next(error);
     }
     let taulu
-    try{
+    try {
         taulu = await Taulut.findOne({ _id: TauluID });
-    }catch{
+    } catch {
         const error = new HttpError('Taulua ei löydy', 500);
         return next(error);
     }
     res.json(taulu);
 }
+
+const updateSolunArvo = async (req, res, next) => {
+    const value = req.body.value;
+    console.log(value)
+    const TauluID = req.params._id;
+    console.log("TauluID:", TauluID);
+    try {
+        const SolunTiedot = await Taulut.findOneAndUpdate(
+            { 'solujenArvot._id': TauluID },
+            { $set: { 'solujenArvot.$.value': value } },
+            { new: true }
+        );
+        console.log("SolunTiedot:", SolunTiedot);
+        if (SolunTiedot) {
+            SolunTiedot.value = value;
+            await SolunTiedot.save();
+            res.json({ Taulut: SolunTiedot.toObject({ getters: true }) });
+        } else {
+            const error = new HttpError("Taulua ei löydy", 404);
+            return next(error);
+        }
+    } catch (error) {
+        console.error(error);
+        const responseError = new HttpError("Internal Server Error", 500);
+        return next(responseError);
+    }
+};
 exports.HaeTaulunTiedot = HaeTaulunTiedot;
 exports.UpdateTaulu = UpdateTaulu;
 exports.CreateNewTaulu = CreateNewTaulu;
 exports.getByID = getByID;
+exports.updateSolunArvo = updateSolunArvo;

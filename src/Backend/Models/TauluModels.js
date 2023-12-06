@@ -3,8 +3,16 @@ const Schema = mongoose.Schema;
 const ObjectId = mongoose.Schema.Types.ObjectId;
 
 const TauluSchema = new Schema({
-    rivit: {type:String,require:false},
-    solut: {type: String, require:false},
-    _id: {type:ObjectId, default:ObjectId}
+    rivit: { type: Number, required: true },
+    solut: { type: Number, required: true },
+    solujenArvot: {
+        type: [
+            {
+                value: { type: Number, required: true },
+            },
+        ],
+        required: true,
+    },
+    _id: { type: ObjectId, default: ObjectId }
 })
 module.exports = mongoose.model('TauluModels', TauluSchema)
