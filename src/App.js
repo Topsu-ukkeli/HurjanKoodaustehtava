@@ -10,9 +10,7 @@ const App = () => {
   const [SolumaaraM, setSolumaaraM] = useState(0); // SolujenMaaraM = arvo M
   const [ShowOptions, setShowOptions] = useState(true); //Tämän pitäisi piilottaa select vaihtoehto, ennen kuin sivun hae tiedot painiketta on painettu
   const [TauluID, setTauluID] = useState(""); //Katsotaan taulunID kun päivitetään tietokantaan tiedot rivillä 60
-
-
-
+  
   //tällä funktiolla katsotaan input kentän arvo, jotta se ei ole negatiivinen samanlainen koodi on rivillä 26
   const handleRowChange = (e) => {
     const value = Number(e.target.value);
@@ -108,6 +106,7 @@ const App = () => {
     } catch (error) {
       //console.error('Error:', error.message);
     }
+    await new Promise(resolve => setTimeout(resolve, 5000));
     //Haetaan taulu tieto ja tulostetaan se näytölle
     TaulunHaku();
   };
